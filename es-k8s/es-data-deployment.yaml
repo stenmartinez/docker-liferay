@@ -1,0 +1,94 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: es-data
+  labels:
+    component: elasticsearch
+    role: data
+spec:
+  selector:
+    matchLabels:
+      component: elasticsearch
+      role: data
+  replicas: 3
+  serviceName: es-data
+  template:
+    metadata:
+      labels:
+        component: elasticsearch
+        role: data
+    spec:
+      serviceAccount: elasticsearch
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: es-storage
+          mountPath: /usr/share/elasticsearch/data
+      - name: init-sysctl
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      - name: increase-fd-ulimit
+        image: busybox
+        command: ["sh", "-c", "ulimit -n 65536"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: es-data
+        securityContext:
+          capabilities:
+            add:
+              - IPC_LOCK
+        image: longfalcon/liferay-docker:elasticsearch-2.4
+        imagePullPolicy: Always
+        env:
+        - name: KUBERNETES_CA_CERTIFICATE_FILE
+          value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: "CLUSTER_NAME"
+          value: "LiferayElasticsearchCluster"
+        - name: NODE_MASTER
+          value: "false"
+        - name: NODE_DATA
+          value: "true"
+        - name: HTTP_ENABLE
+          value: "false"
+        - name: ES_JAVA_OPTS
+          value: "-Xms8192m -Xmx8192m"
+        - name: NETWORK_HOST
+          value: "0.0.0.0"
+        - name: NETWORK_PUBLIC_HOST
+          value: "_ec2:privateIp_"
+        - name: NUMBER_OF_MASTERS
+          value: "2"
+        - name: NUMBER_OF_REPLICAS
+          value: "2"
+        - name: NUMBER_OF_SHARDS
+          value: "3"
+        ports:
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: es-storage
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:               # It  provides stable storage using PersistentVolumes provisioned by a PersistentVolume Provisioner
+  - metadata:                         # Metadata given to this resource (Persistant Volume Claim)
+      name: es-storage                   # Name of this resource
+    spec:                             # Specification of this PVC (Persistant Volume Claim)
+      storageClassName: iops           # Storage class used to provision this PVC
+      accessModes: [ ReadWriteOnce ]  # Access mode of the volume
+      resources:                      # Holds the list of resources
+        requests:                     # Requests sent to the storage class
+          storage: 20Gi                # Request to provision a volume of 1 GB

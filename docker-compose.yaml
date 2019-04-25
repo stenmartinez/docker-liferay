@@ -1,0 +1,28 @@
+version: '3'
+services:
+  mariadb:
+    image: longfalcon/liferay-docker:mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: lportal
+      MYSQL_USER: lportal
+      MYSQL_PASSWORD: password
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - webnet
+  adminer:
+    image: adminer
+    ports:
+      - "9090:8080"
+    networks:
+      - webnet
+volumes:
+  dbdata:
+    driver: local
+
+networks:
+  webnet:
+    driver: bridge
