@@ -1,0 +1,52 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: liferay
+  labels:
+    run: liferay
+spec:
+  selector:
+      matchLabels:
+        run: liferay
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: liferay
+    spec:
+      containers:
+      - name: liferay
+        image: backupdev.azurecr.io/liferay/desjardins-liferay:1
+        imagePullPolicy: Always
+        env:
+        - name: SERVER_NAME
+          value: dev.lfrgs23.com
+        - name: ES_TRANSPORT_ADDRESS
+          value: "elasticsearch:9300"
+        - name: ES_OPERATION_MODE
+          value: "REMOTE"
+        - name: DB_NAME
+          value: "dj-71"
+        - name: DB_URL
+          value: "lfrgs-dj-pg.postgres.database.azure.com"
+        - name: DB_USER
+          value: lportal@lfrgs-dj-pg
+        - name: DB_PASSWORD
+          value: DevTest123
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 443
+          name: https
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /opt/liferay/data/document_library
+          name: az-storage
+      imagePullSecrets:
+      - name: acr-auth
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: az-storage
+        persistentVolumeClaim:
+          claimName: liferay-files

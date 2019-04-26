@@ -1,0 +1,21 @@
+cluster.name: ${CLUSTER_NAME}
+
+node.master: ${NODE_MASTER}
+node.data: ${NODE_DATA}
+
+network.host: 0.0.0.0
+network.publish_host: ${NETWORK_HOST}
+
+bootstrap:
+  memory_lock: false
+
+http.enabled: ${HTTP_ENABLE}
+http.compression: true
+http.cors.enabled: ${HTTP_CORS_ENABLE}
+http.cors.allow-origin: ${HTTP_CORS_ALLOW_ORIGIN}
+
+discovery.zen:
+  minimum_master_nodes: ${NUMBER_OF_MASTERS}
+  ping.unicast.hosts: ${DISCOVERY_SERVICE}
+
+

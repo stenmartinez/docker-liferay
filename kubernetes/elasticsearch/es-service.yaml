@@ -26,6 +26,7 @@ metadata:
   name: elasticsearch
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
   labels:
     component: elasticsearch
     role: master

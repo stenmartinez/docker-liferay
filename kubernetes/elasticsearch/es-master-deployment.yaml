@@ -10,7 +10,7 @@ spec:
       matchLabels:
         component: elasticsearch
         role: master
-  replicas: 2
+  replicas: 1
   serviceName: es-master
   template:
     metadata:
@@ -45,7 +45,7 @@ spec:
           capabilities:
             add:
               - IPC_LOCK
-        image: longfalcon/liferay-docker:elasticsearch-2.4
+        image: backupdev.azurecr.io/elasticsearch-6:6
         imagePullPolicy: Always
         env:
         - name: KUBERNETES_CA_CERTIFICATE_FILE
@@ -59,21 +59,21 @@ spec:
         - name: NODE_MASTER
           value: "true"
         - name: NODE_DATA
-          value: "false"
+          value: "true"
         - name: HTTP_ENABLE
           value: "false"
         - name: ES_JAVA_OPTS
-          value: "-Xms4096m -Xmx4096m"
+          value: "-Xms2048m -Xmx2048m"
         - name: NETWORK_HOST
           value: "0.0.0.0"
         - name: NETWORK_PUBLIC_HOST
-          value: "_ec2:privateIp_"
+          value: "_site_"
         - name: NUMBER_OF_MASTERS
-          value: "2"
+          value: "1"
         - name: NUMBER_OF_REPLICAS
-          value: "2"
+          value: "1"
         - name: NUMBER_OF_SHARDS
-          value: "3"
+          value: "1"
         ports:
         - containerPort: 9300
           name: transport
@@ -81,14 +81,16 @@ spec:
         volumeMounts:
         - mountPath: /usr/share/elasticsearch/data
           name: es-storage
+      imagePullSecrets:
+      - name: acr-auth
   updateStrategy:
     type: RollingUpdate
   volumeClaimTemplates:               # It  provides stable storage using PersistentVolumes provisioned by a PersistentVolume Provisioner
   - metadata:                         # Metadata given to this resource (Persistant Volume Claim)
       name: es-storage                   # Name of this resource
     spec:                             # Specification of this PVC (Persistant Volume Claim)
-      storageClassName: gp2          # Storage class used to provision this PVC
+      storageClassName: managed-premium          # Storage class used to provision this PVC
       accessModes: [ ReadWriteOnce ]  # Access mode of the volume
       resources:                      # Holds the list of resources
         requests:                     # Requests sent to the storage class
-          storage: 20Gi                # Request to provision a volume of 1 GB
+          storage: 10Gi                # Request to provision a volume of 1 GB
